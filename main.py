@@ -7,7 +7,7 @@ app = FastAPI()
 
 df_reviews = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/user_reviews.parquet')
 df_generos = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/generos.parquet')
-df_generos_horas = pd.read_parquet('//Users/gaston/Documents/Proy.-Data-Analyst-1/Data/generos_horas.parquet')
+df_generos_horas = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/generos_horas.parquet')
 df_userdata = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/df_userdata.parquet')
 df_developer = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/df_developer.parquet')
 
