@@ -5,23 +5,24 @@ from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
-users_games = pd.read_parquet('/Users/gaston/Documents/PI-MLOps---STEAM/Data/users_games.parquet')
-reviews = pd.read_parquet('/Users/gaston/Documents/PI-MLOps---STEAM/Data/user_reviews.parquet')
-generos = pd.read_parquet('/Users/gaston/Documents/PI-MLOps---STEAM/Data/generos.parquet')
-generos_horas = pd.read_parquet('//Users/gaston/Documents/PI-MLOps---STEAM/Data/generos_horas.parquet')
+df_reviews = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/user_reviews.parquet')
+df_generos = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/generos.parquet')
+df_generos_horas = pd.read_parquet('//Users/gaston/Documents/Proy.-Data-Analyst-1/Data/generos_horas.parquet')
+df_userdata = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/df_userdata.parquet')
+df_developer = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/df_developer.parquet')
 
 
 @app.get("/userdata/{user_id}", name = "userdata (user_id)")
 async def userdata(user_id:str):
     # Filtro el DataFrame para obtener solo las filas del usuario específico
-    user_data = users_games[users_games['user_id'] == user_id]
+    user_data = df_userdata[df_userdata['user_id'] == user_id]
 
     # Calculo la cantidad de dinero gastado sumando el precio de todos los elementos comprados
     if user_data.empty:
         total_gasto = 0
     else: total_gasto = round(user_data['price'].sum(),2)
     
-    user_reviews = reviews[reviews['user_id'] == user_id]
+    user_reviews = df_reviews[df_reviews['user_id'] == user_id]
     
     if user_reviews.empty:
         recommendation_percentage = 0
@@ -48,7 +49,7 @@ async def count_reviews(start_date: str, end_date: str):
     end_date = pd.to_datetime(end_date)
 
     # Filtra el DataFrame para obtener las reseñas en el rango de fechas
-    filtered_df = reviews[(reviews['fecha_review'] >= start_date) & (reviews['fecha_review'] <= end_date)]
+    filtered_df = df_reviews[(df_reviews['fecha_review'] >= start_date) & (df_reviews['fecha_review'] <= end_date)]
 
     # Cuenta la cantidad de usuarios que realizaron reseñas en el rango
     num_users = filtered_df['user_id'].nunique()
@@ -69,18 +70,15 @@ async def count_reviews(start_date: str, end_date: str):
 
 @app.get("/generos/{genero}", name = "generos (genero)")
 async def genre_ranking(genero: str):
-    # Filtro el DF por el género deseado
-    #df_generos = df_generos[df_generos['genres'].str.contains(genero, case=False, na=False)]
     
-     # Convierto la columna 'genres' a minúsculas para que el usuario pueda digitar sin problemas y no genere error
-     #por ejemplo si digita action en lugar de Action
-    generos['genres'] = generos['genres'].str.lower()
+    #genero el dataframe adentro de la función leyendo el parquet
+    df_generos = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/generos.parquet')
 
-    # Convertir el género de buscado a minúsculas
-    genero = genero.lower()
-
+    #Realizo un explode de la columna 'genres' para poder desanidar la información en distintos registros
+    df_generos = df_generos[['genres','playtime_forever']].explode('genres')
+    
     # Agrupo por género y sumo los valores de "playtime_forever"
-    agrupado = generos.groupby('genres')['playtime_forever'].sum().reset_index()
+    agrupado = df_generos.groupby('genres')['playtime_forever'].sum().reset_index()
 
     # Ordeno por la suma de "playtime_forever" en orden descendente
     agrupado = agrupado.sort_values(by='playtime_forever', ascending=False)
@@ -96,6 +94,10 @@ async def genre_ranking(genero: str):
 
 @app.get("/userforgenre/{genero}", name = "userforgenre (genero)")
 async def userforgenre(genero: str):
+    
+    #Realizo un explode de la columna 'genres' para poder desanidar la información en distintos registros
+    generos_horas = df_generos_horas.explode('genres')
+    
     # Filtrar el DataFrame por el género deseado
     genre_df = generos_horas[generos_horas['genres'].str.contains(genero, case=False, na=False)]
 
@@ -114,7 +116,7 @@ async def developer(developer: str):
     
     # Filtramos el DataFrame por el desarrollador dado luego de decodificar el nombre
     decoded_name = unquote(developer)
-    developer_df = users_games[users_games['developer'] == decoded_name]
+    developer_df = df_developer[df_developer['developer'] == decoded_name]
     
     # Calculamos la cantidad de ítems gratuitos (Free) por año para el desarrollador
     items_free_por_anio = developer_df[developer_df['price'] == 0].groupby('release_year')['item_id_x'].nunique()
@@ -147,10 +149,10 @@ async def developer(developer: str):
 @app.get("/sentiment_analysis/{year}", name="sentiment_analysis (year)")
 async def sentiment_analysis(year: int):
     # Primero me aseguro de que los valores de la columna "Año" sean de tipo int
-    reviews['Año'] = reviews['Año'].fillna(0).astype(int)
+    df_reviews['Año'] = df_reviews['Año'].fillna(0).astype(int)
     
     # Filtrar el DataFrame para obtener solo las reseñas del año dado
-    reseñas_del_año = reviews[reviews['Año'] == year]
+    reseñas_del_año = df_reviews[df_reviews['Año'] == year]
     
     # Contar la cantidad de registros para cada categoría de sentimiento
     sentimiento_counts = reseñas_del_año['sentimiento'].astype(int).value_counts()
