@@ -92,39 +92,23 @@ def userforgenre(genero: str):
     return top_5_users[['user_id', 'user_url']]
 
 
-
 @app.get("/developer/{developer}", name="developer (developer)")
 def developer(developer: str):
-    
-    # Filtramos el DataFrame por el desarrollador dado luego de decodificar el nombre
+    # Filtrar el DataFrame por el desarrollador dado luego de decodificar el nombre
     decoded_name = unquote(developer)
-    developer_df = df_developer[df_developer['developer'] == decoded_name]
-    
-    # Calculamos la cantidad de ítems gratuitos (Free) por año para el desarrollador
-    items_free_por_anio = developer_df[developer_df['price'] == 0].groupby('release_year')['item_id_x'].nunique()
-    
-    # Calculamos la cantidad total de ítems por año para el desarrollador
-    items_totales_por_anio = developer_df.groupby('release_year')['item_id_x'].nunique()
-    
-    # Rellenamos los años faltantes en el DataFrame de items_free_por_anio con ceros para que no arroje error el dataframe
-    for year in items_totales_por_anio.index:
-        if year not in items_free_por_anio.index:
-            items_free_por_anio[year] = 0
-    
-    # Ordenamos el DataFrame por año
-    items_free_por_anio = items_free_por_anio.sort_index()
-    
-    # Calculamos el porcentaje de contenido Free por año
-    porcentaje_free = (items_free_por_anio / items_totales_por_anio) * 100
-    
-    # Creamos un DataFrame con los resultados
+    developer_data = df_developer[df_developer['developer'] == decoded_name]
+
+    if developer_data.empty:
+        return JSONResponse(content={"message": "Desarrollador no encontrado"}, status_code=404)
+
+    # Crear un DataFrame con los resultados para el desarrollador
     resultados = {
-        'Year': items_free_por_anio.index.tolist(),
-        'Items Qty': items_totales_por_anio.values.tolist(),
-        'Free percentage': porcentaje_free.values.tolist()
+        'Year': developer_data['release_year'].tolist(),
+        'Items Qty': developer_data['item_id_x'].tolist(),
+        'Free percentage': (developer_data['items_free_por_anio'] / developer_data['item_id_x'] * 100).fillna(0).tolist()
     }
-    
-    # Devolvemos los resultados como una respuesta JSON
+
+    # Devolver los resultados como una respuesta JSON
     return JSONResponse(content=resultados)
 
 
