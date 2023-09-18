@@ -13,7 +13,7 @@ df_developer = pd.read_parquet('Data/df_developer.parquet')
 
 
 @app.get("/userdata/{user_id}", name = "userdata (user_id)")
-async def userdata(user_id:str):
+def userdata(user_id:str):
     # Filtro el DataFrame para obtener solo las filas del usuario específico
     user_data = df_userdata[df_userdata['user_id'] == user_id]
 
@@ -43,7 +43,7 @@ async def userdata(user_id:str):
 
 
 @app.get("/countreviews/{start_date},{end_date}", name = "countreviews (start_date, end_date)")
-async def count_reviews(start_date: str, end_date: str):
+def count_reviews(start_date: str, end_date: str):
     # Convierte las fechas de inicio y fin a objetos datetime
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
@@ -69,16 +69,13 @@ async def count_reviews(start_date: str, end_date: str):
 
 
 @app.get("/generos/{genero}", name = "generos (genero)")
-async def genre_ranking(genero: str):
+def genre_ranking(genero: str):
     
-    #genero el dataframe adentro de la función leyendo el parquet
-    df_generos = pd.read_parquet('/Users/gaston/Documents/Proy.-Data-Analyst-1/Data/generos.parquet')
-
     #Realizo un explode de la columna 'genres' para poder desanidar la información en distintos registros
-    df_generos = df_generos[['genres','playtime_forever']].explode('genres')
+    generos = df_generos[['genres','playtime_forever']].explode('genres')
     
     # Agrupo por género y sumo los valores de "playtime_forever"
-    agrupado = df_generos.groupby('genres')['playtime_forever'].sum().reset_index()
+    agrupado = generos.groupby('genres')['playtime_forever'].sum().reset_index()
 
     # Ordeno por la suma de "playtime_forever" en orden descendente
     agrupado = agrupado.sort_values(by='playtime_forever', ascending=False)
@@ -93,7 +90,7 @@ async def genre_ranking(genero: str):
 
 
 @app.get("/userforgenre/{genero}", name = "userforgenre (genero)")
-async def userforgenre(genero: str):
+def userforgenre(genero: str):
     
     #Realizo un explode de la columna 'genres' para poder desanidar la información en distintos registros
     generos_horas = df_generos_horas.explode('genres')
@@ -112,7 +109,7 @@ async def userforgenre(genero: str):
 
 
 @app.get("/developer/{developer}", name="developer (developer)")
-async def developer(developer: str):
+def developer(developer: str):
     
     # Filtramos el DataFrame por el desarrollador dado luego de decodificar el nombre
     decoded_name = unquote(developer)
@@ -147,7 +144,7 @@ async def developer(developer: str):
 
 
 @app.get("/sentiment_analysis/{year}", name="sentiment_analysis (year)")
-async def sentiment_analysis(year: int):
+def sentiment_analysis(year: int):
     # Primero me aseguro de que los valores de la columna "Año" sean de tipo int
     df_reviews['Año'] = df_reviews['Año'].fillna(0).astype(int)
     
