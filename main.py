@@ -71,38 +71,23 @@ def count_reviews(start_date: str, end_date: str):
 @app.get("/generos/{genero}", name = "generos (genero)")
 def genre_ranking(genero: str):
     
-    #Realizo un explode de la columna 'genres' para poder desanidar la información en distintos registros
-    generos = df_generos[['genres','playtime_forever']].explode('genres')
-    
-    # Agrupo por género y sumo los valores de "playtime_forever"
-    agrupado = generos.groupby('genres')['playtime_forever'].sum().reset_index()
-
-    # Ordeno por la suma de "playtime_forever" en orden descendente
-    agrupado = agrupado.sort_values(by='playtime_forever', ascending=False)
-
     # Calculo el ranking basado en la suma de "playtime_forever"
-    agrupado['Rank'] = agrupado['playtime_forever'].rank(method='min', ascending=False)
+    df_generos['Rank'] = df_generos['playtime_forever'].rank(method='min', ascending=False)
 
     # Obtengo el puesto del género en el ranking
-    rank = round(agrupado[agrupado['genres'] == genero]['Rank'].values[0])
+    rank = round(df_generos[df_generos['genres'] == genero]['Rank'].values[0])
     result = {'The rank of the genre is':rank}
     return result
 
 
 @app.get("/userforgenre/{genero}", name = "userforgenre (genero)")
 def userforgenre(genero: str):
-    
-    #Realizo un explode de la columna 'genres' para poder desanidar la información en distintos registros
-    generos_horas = df_generos_horas.explode('genres')
-    
+     
     # Filtrar el DataFrame por el género deseado
-    genre_df = generos_horas[generos_horas['genres'].str.contains(genero, case=False, na=False)]
-
-    # Agrupar por usuario y sumar las horas de juego para cada usuario
-    user_playtime = genre_df.groupby(['user_id', 'user_url'])['playtime_forever'].sum().reset_index()
+    genre_df = df_generos_horas[df_generos_horas['genres'].str.contains(genero, case=False, na=False)]
 
     # Ordenar en orden descendente por horas de juego y obtener el top 5
-    top_5_users = user_playtime.sort_values(by='playtime_forever', ascending=False).head(5)
+    top_5_users = genre_df.sort_values(by='playtime_forever', ascending=False).head(5)
 
     return top_5_users[['user_id', 'user_url']]
 
@@ -145,16 +130,14 @@ def developer(developer: str):
 
 @app.get("/sentiment_analysis/{year}", name="sentiment_analysis (year)")
 def sentiment_analysis(year: int):
-    # Primero me aseguro de que los valores de la columna "Año" sean de tipo int
-    df_reviews['Año'] = df_reviews['Año'].fillna(0).astype(int)
-    
-    # Filtrar el DataFrame para obtener solo las reseñas del año dado
+   
+    # Filtra el DataFrame para obtener solo las reseñas del año dado
     reseñas_del_año = df_reviews[df_reviews['Año'] == year]
     
-    # Contar la cantidad de registros para cada categoría de sentimiento
+    # Cuenta la cantidad de registros para cada categoría de sentimiento
     sentimiento_counts = reseñas_del_año['sentimiento'].astype(int).value_counts()
 
-    # Convertir los resultados a un diccionario con las etiquetas "Negative", "Neutral" y "Positive"
+    # Convierte los resultados a un diccionario con las etiquetas "Negative", "Neutral" y "Positive"
     resultado = {
         "Negative": int(sentimiento_counts.get(0, 0)),  # Valor 0 representa "Negative"
         "Neutral": int(sentimiento_counts.get(1, 0)),   # Valor 1 representa "Neutral"
