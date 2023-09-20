@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import pandas as pd
 from urllib.parse import unquote
 from fastapi.responses import JSONResponse
+from sklearn.metrics.pairwise import cosine_similarity
 
 app = FastAPI()
 
@@ -10,7 +11,7 @@ df_generos = pd.read_parquet('Data/generos.parquet')
 df_generos_horas = pd.read_parquet('Data/generos_horas.parquet')
 df_userdata = pd.read_parquet('Data/df_userdata.parquet')
 df_developer = pd.read_parquet('Data/df_developer.parquet')
-
+df_modelo = pd.read_parquet('Data/modelo_final.parquet')
 
 @app.get("/userdata/{user_id}", name = "userdata (user_id)")
 def userdata(user_id:str):
@@ -129,6 +130,32 @@ def sentiment_analysis(year: int):
     }
 
     return resultado
+
+
+
+@app.get("/modelo_recomendacion/{id}", name="modelo_recomendacion (id)")
+def recomendacion(id: int):
+    
+    id = int(id)
+    # Filtro el juego de entrada por su ID
+    juego_seleccionado = df_modelo[df_modelo['id'] == id]
+    
+    if juego_seleccionado.empty:
+        return "El juego con el ID especificado no existe en la base de datos."
+    
+    # Calculo la matriz de similitud coseno
+    similitudes = cosine_similarity(df_modelo.iloc[:,3:])
+    
+    # Obtener las puntuaciones de similitud del juego de entrada con otros juegos
+    similarity_scores = similitudes[df_modelo[df_modelo['id'] == id].index[0]]
+    
+    # Obtener los índices de los juegos más similares (excluyendo el juego de entrada)
+    indices_juegos_similares = similarity_scores.argsort()[::-1][1:5+1]
+    
+    # Obtener los nombres de los juegos recomendados
+    juegos_recomendados = df_modelo.iloc[indices_juegos_similares]['app_name'].tolist()
+    
+    return juegos_recomendados
 
 
 
