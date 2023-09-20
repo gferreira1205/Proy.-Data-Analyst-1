@@ -3,7 +3,6 @@ import pandas as pd
 from urllib.parse import unquote
 from fastapi.responses import JSONResponse
 from sklearn.metrics.pairwise import cosine_similarity
-import gzip
 
 app = FastAPI()
 
