@@ -16,4 +16,5 @@ Para este proyecto se proporcionaron tres archivos JSON comprimidos a gz:
 
 En el documento [Diccionario de datos](JupyterNotebooks/Diccionario_de_datos.md) se encuetran los detalles de cada una de las variables de los conjuntos de datos.
 
-
+## Tareas desarrolladas
+### Transformaciones
