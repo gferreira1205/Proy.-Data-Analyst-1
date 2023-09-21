@@ -14,6 +14,6 @@ Para este proyecto se proporcionaron tres archivos JSON comprimidos a gz:
 
 **users_items.json:** es un dataset que contiene información sobre los juegos que juegan todos los usuarios, así como el tiempo acumulado que cada usuario jugó a un determinado juego.
 
-En el documento [Diccionario de datos](Diccionario_de_datos.md) se encuetran los detalles de cada una de las variables de los conjuntos de datos.
+En el documento [Diccionario de datos](JupyterNotebooks/Diccionario_de_datos.md) se encuetran los detalles de cada una de las variables de los conjuntos de datos.
 
 
