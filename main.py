@@ -4,8 +4,10 @@ from urllib.parse import unquote
 from fastapi.responses import JSONResponse
 from sklearn.metrics.pairwise import cosine_similarity
 
+#Instancio la app
 app = FastAPI()
 
+#leo los archivos a consumir en las funciones
 df_reviews = pd.read_parquet('Data/user_reviews.parquet')
 df_generos = pd.read_parquet('Data/generos.parquet')
 df_generos_horas = pd.read_parquet('Data/generos_horas.parquet')
@@ -14,9 +16,22 @@ df_developer = pd.read_parquet('Data/df_developer.parquet')
 df_modelo = pd.read_parquet('Data/df_modelo_final.parquet')
 df_similitudes = pd.read_parquet('Data/matriz_similitud.parquet')
 
+#FUNCIONES:
 
+#userdata
+'''Esta función devuelve información sobre un usuario según su 'user_id'. Args:
+    user_id (str): Identificador único del usuario.
+    
+    Returns:
+        dict: Un diccionario que contiene información sobre el usuario.
+            - 'Total spent by user' (int): Cantidad de dinero gastado por el usuario.
+            - 'Recommendation percentage' (float): Porcentaje de recomendaciones realizadas por el usuario.
+            - 'Items quantity' (int): Cantidad de items que tiene el usuario.
+            '''
+            
 @app.get("/userdata/{user_id}", name = "userdata (user_id)")
-def userdata(user_id:str):
+async def userdata(user_id:str):
+    
     # Filtro el DataFrame para obtener solo las filas del usuario específico
     user_data = df_userdata[df_userdata['user_id'] == user_id]
 
@@ -45,8 +60,21 @@ def userdata(user_id:str):
     return user_info
 
 
+#countreviews
+'''Esta función devuelve estadísticas sobre las reviews realizadas por los usuarios entre dos fechas.
+         
+    Args:
+        start_date (str): Fecha de inicio para filtrar la información (se debe ingresar el año).
+        fecha_fin (str): Fecha de fin para filtrar la información (se debe ingresar el año).
+    
+    Returns:
+        dict: Un diccionario que contiene estadísticas de las reviews entre las fechas especificadas.
+            - 'Total users who made reviews' (int): Cantidad de usuarios que realizaron reviews entre las fechas.
+            - 'Recommendation percentage' (float): Porcentaje de recomendaciones positivas (True) entre las reviews realizadas.
+    '''
+    
 @app.get("/countreviews/{start_date},{end_date}", name = "countreviews (start_date, end_date)")
-def count_reviews(start_date: str, end_date: str):
+async def count_reviews(start_date: str, end_date: str):
     # Convierte las fechas de inicio y fin a objetos datetime
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
@@ -71,8 +99,19 @@ def count_reviews(start_date: str, end_date: str):
     return info
 
 
+#generos
+'''Esta función devuelve la posición de un género de videojuego en un ranking basado en la cantidad de horas jugadas.
+         
+    Args:
+        genero (str): Género del videojuego.
+    
+    Returns:
+        dict: Un diccionario que contiene la posición del género en el ranking.
+            - 'rank' (int): Posición del género en el ranking basado en las horas jugadas.
+    '''
+    
 @app.get("/generos/{genero}", name = "generos (genero)")
-def genre_ranking(genero: str):
+async def genre_ranking(genero: str):
     
     # Calculo el ranking basado en la suma de "playtime_forever"
     df_generos['Rank'] = df_generos['playtime_forever'].rank(method='min', ascending=False)
@@ -83,8 +122,21 @@ def genre_ranking(genero: str):
     return result
 
 
+#userforgenre
+'''
+    Esta función devuelve el top 5 de usuarios con más horas de juego en un género específico, junto con su URL de perfil y ID de usuario.
+         
+    Args:
+        genero (str): Género del videojuego.
+    
+    Returns:
+        Lista: Una lista que contiene el top 5 de usuarios con más horas de juego en el género dado, junto con su URL de perfil y ID de usuario.
+            - 'user_id' (str): ID del usuario.
+            - 'user_url' (str): URL del perfil del usuario.
+    '''
+
 @app.get("/userforgenre/{genero}", name = "userforgenre (genero)")
-def userforgenre(genero: str):
+async def userforgenre(genero: str):
      
     # Filtrar el DataFrame por el género deseado
     genre_df = df_generos_horas[df_generos_horas['genres'].str.contains(genero, case=False, na=False)]
@@ -95,8 +147,23 @@ def userforgenre(genero: str):
     return top_5_users[['user_id', 'user_url']]
 
 
+
+#developer
+'''
+    Esta función devuelve información sobre una empresa desarrolladora de videojuegos.
+         
+    Args:
+        developer (str): Nombre del desarrollador de videojuegos.
+    
+    Returns:
+        dict: Un diccionario que contiene información sobre la empresa desarrolladora.
+            - 'year' (dict): año.
+            - 'Items Qty' (dict): Cantidad de items desarrollados por año.
+            - 'Free percentage' (dict): Porcentaje de contenido gratuito por año según la empresa desarrolladora.
+    '''
+
 @app.get("/developer/{developer}", name="developer (developer)")
-def developer(developer: str):
+async def developer(developer: str):
     # Filtrar el DataFrame por el desarrollador dado luego de decodificar el nombre
     decoded_name = unquote(developer)
     developer_data = df_developer[df_developer['developer'] == decoded_name]
@@ -115,8 +182,18 @@ def developer(developer: str):
     return JSONResponse(content=resultados)
 
 
+#sentiment_analysis
+'''Realiza un análisis de sentimiento en base al año ingresado.
+    
+    Args:
+        year (str): El año para filtrar las reseñas.
+    
+    Returns:
+        dict: Un diccionario con el recuento de categorías de sentimiento.
+    '''
+
 @app.get("/sentiment_analysis/{year}", name="sentiment_analysis (year)")
-def sentiment_analysis(year: int):
+async def sentiment_analysis(year: int):
    
     # Filtra el DataFrame para obtener solo las reseñas del año dado
     reseñas_del_año = df_reviews[df_reviews['Año'] == year]
@@ -134,9 +211,20 @@ def sentiment_analysis(year: int):
     return resultado
 
 
+#modelo_recomendacion
+'''
+    Muestra una lista de juegos similares a un juego dado.
+
+    Args:
+        ID (INT): El ID del juego para el cual se desean encontrar juegos similares.
+
+    Returns:
+        df: Un diccionario con 5 nombres de juegos recomendados.
+
+    '''
 
 @app.get("/modelo_recomendacion/{id}", name="modelo_recomendacion (id)")
-def recomendacion_juego(id):
+async def recomendacion_juego(id):
     
     id = int(id)
     # Filtrar el juego de entrada por su ID
