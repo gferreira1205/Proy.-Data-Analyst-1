@@ -92,9 +92,9 @@ Para el deploy de la API se seleccionó la plataforma Render que es una nube uni
 
 Se generó un nuevo WebService en render.com, conectado al presente repositorio.  
 
-Finalmente, el servicio queda corriendo en https://pi1-games.onrender.com/.  
+Finalmente, el servicio queda corriendo en https://gferreira1205-proy-data-analyst.onrender.com/docs.  
 
-Video
+**Video** https://www.loom.com/share/0da837436f854858848371aa62317d00
 
 En este video se explica brevemente este proyecto mostrando el funcionamiento de la API.
 
